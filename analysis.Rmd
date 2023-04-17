@@ -1,0 +1,234 @@
+---
+title: "Narcissism"
+subtitle: "Analysis"
+author: "Dominique Makowski et al."
+output:
+  html_document:
+    toc: true
+    toc_depth: 2
+    theme: paper
+    # code_folding: hide
+date: "`r Sys.Date()`"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r, echo = FALSE, warning=FALSE, message=FALSE}
+options(
+  digits = 3,
+  mc.cores = 4,
+  brms.algorithm = "sampling",
+  brms.backend = "cmdstanr",
+  dplyr.summarise.inform = FALSE,
+  knitr.kable.NA = ""
+)
+
+fig.width <- see::golden_ratio(7)
+fig.height <- 7
+set.seed(333)
+
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  dpi = 450,
+  fig.path = "./figures/",
+  fig.width = fig.width,
+  fig.height = fig.height
+)
+```
+
+
+See https://psyarxiv.com/5ygtc/
+
+# Participants
+
+
+```{r, message=FALSE, warning=FALSE, results='asis', cache=TRUE}
+library(tidyverse)
+library(easystats)
+library(patchwork)
+library(lavaan)
+library(ggraph)
+library(tidySEM)
+
+df <- haven::read_sav("data/Data_Study 1.sav") |> 
+  mutate_all(as.numeric) |> 
+  filter(!is.na(exclude) & exclude == 0) |> 
+  mutate(gen = as.character(ifelse(gen == 1, "Male", ifelse(gen == 2, "Female", "Other"))))
+
+data <- df |> 
+  select(matches("npi[[:digit:]]"),
+         matches("narq[[:digit:]]"),
+         matches("pni[[:digit:]]"),
+         matches("hn[[:digit:]]"),
+         matches("dt[[:digit:]]"),
+         matches("dsm[[:digit:]]")) |> 
+  select(-ends_with("r")) |> 
+  normalize(verbose=FALSE) |> 
+  mutate(across(everything(), as.numeric))
+
+
+# names(df)
+# data
+# summary(data)
+
+paste0(
+  "Data from the [study 1](https://osf.io/gp6a4/) (Weidmann et al.), downloaded from OSF, included ",
+  report::report_participants(df, age = "age", gender = "gen", race = NA),
+  "."
+)
+```
+
+
+# Distributions
+
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
+plot_hist <- function(data, x) {
+  data |> 
+    select(starts_with(x)) |> 
+    pivot_longer(everything()) |> 
+    filter(!is.na(value)) |> 
+    ggplot(aes(x = value)) +
+    geom_histogram(aes(fill=name), alpha = 0.3, position = "dodge") +
+    theme(legend.position = "none")
+}
+
+patchwork::wrap_plots(
+  plot_hist(data, "npi"),
+  plot_hist(data, "narq"),
+  plot_hist(data, "pni"),
+  plot_hist(data, "hn"),
+  plot_hist(data, "dt"),
+  plot_hist(data, "dsm")
+)
+```
+
+# Distributions
+
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
+plot_hist <- function(data, x) {
+  data |> 
+    select(starts_with(x)) |> 
+    pivot_longer(everything()) |> 
+    filter(!is.na(value)) |> 
+    ggplot(aes(x = value)) +
+    geom_histogram(aes(fill=name), alpha = 0.3, position = "dodge") +
+    theme(legend.position = "none")
+}
+
+patchwork::wrap_plots(
+  plot_hist(data, "npi"),
+  plot_hist(data, "narq"),
+  plot_hist(data, "pni"),
+  plot_hist(data, "hn"),
+  plot_hist(data, "dt"),
+  plot_hist(data, "dsm")
+)
+```
+
+
+# Correlation
+
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
+# r <- cor(data, use = "pairwise.complete.obs")
+r <- correlation(data) 
+
+r |> 
+  arrange(desc(abs(r))) |> 
+  head()
+```
+
+# EFA
+
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
+n <- parameters::n_factors(data, n_max = 15)
+
+n
+
+plot(n)
+```
+
+```{r, message=FALSE, warning=FALSE, fig.width=20, fig.height=20, cache=TRUE}
+efa1 <- parameters::factor_analysis(data, n=1, sort = TRUE)
+
+efa3 <- parameters::factor_analysis(data, n=3, rotation = "oblimin", sort = TRUE)
+
+efa3_varimax <- parameters::factor_analysis(data, n=3, rotation = "varimax", sort = TRUE)
+
+efa3_equamax <- parameters::factor_analysis(data, n=3, rotation = "equamax", sort = TRUE)
+
+efa3_bentlerQ <- parameters::factor_analysis(data, n=3, rotation = "bentlerQ", sort = TRUE)
+
+wrap_plots(plot(efa3), plot(efa3_varimax), plot(efa3_equamax), plot(efa3_bentlerQ))
+```
+
+
+
+
+# CFA
+
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
+cfa1 <-  parameters::efa_to_cfa(efa1, sort=TRUE, max_per_dimension=5) |> 
+  lavaan::cfa(data=data)
+
+cfa3 <- parameters::efa_to_cfa(efa3, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+  lavaan::cfa(data=data)
+
+cfa3b <- parameters::efa_to_cfa(efa3_varimax, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+  lavaan::cfa(data=data)
+
+cfa3c <- parameters::efa_to_cfa(efa3_equamax, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+  lavaan::cfa(data=data)
+
+cfa3d <- parameters::efa_to_cfa(efa3_bentlerQ, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+  lavaan::cfa(data=data)
+
+anova(cfa1, cfa3, cfa3b, cfa3c, cfa3d)
+
+parameters::parameters(cfa3b) |> 
+  display() 
+```
+
+
+# Items
+
+```{r message=FALSE, warning=FALSE, cache=TRUE}
+# chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/http://www.antoniocasella.eu/archipsy/Wright_2010.pdf
+# chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/http://www.persoc.net/persoc/uploads/Toolbox/NARQ_English.pdf
+add_labels <- function(x) {
+  case_when(x == "pni8" ~ "When people don’t notice me, I start to feel bad about myself.",
+            x == "pni16" ~ "When others don’t notice me, I start to feel worthless.",
+            x == "pni18" ~ "I typically get very angry when I’m unable to get what I want from others.",
+            x == "pni30" ~ "It’s hard to feel good about myself unless I know other people admire me.",
+            x == "pni32" ~ "I am preoccupied with thoughts and concerns that most people are not interested in me.",
+            x == "pni36" ~ "It’s hard for me to feel good about myself unless I know other people like me.",
+            x == "pni40" ~ "I am disappointed when people don’t notice me.",
+            x == "pni47" ~ "When others don’t respond to me the way that I would like them to, it is hard for me to still feel ok with myself.",
+            x == "narq1" ~ "I am great.",
+            x == "narq3" ~ "I show others how special I am.",
+            x == "narq7" ~ "Most of the time I am able to draw people’s attention to myself in conversations.",
+            x == "narq8" ~ "I deserve to be seen as a great personality.",
+            x == "narq9" ~ "I want my rivals to fail.",
+            x == "narq10" ~ "I enjoy it when another person is inferior to me.",
+            x == "narq12" ~ "I can barely stand it if another person is at the center of events.",
+            x == "narq13" ~ "Most people won’t achieve anything.",
+            x == "narq14" ~ "Other people are worth nothing.",
+            x == "narq15" ~ "Being a very special person gives me a lot of strength.",
+            x == "narq16" ~ "I manage to be the center of attention with my outstanding contributions.",
+            x == "narq17" ~ "Most people are somehow losers.",
+            x == "hn10" ~ "I am secretly 'put out' or annoyed when other people come to me with their troubles, asking me for my time and sympathy.",
+            x == "dt4" ~ "I tend to expect special favors from others.",
+            # TODO
+            TRUE ~ x)
+}
+
+
+parameters(cfa3b, standardize=TRUE, component="loading") |> 
+  arrange(To, desc(abs(Coefficient))) |>
+  mutate(Dimension = To, Item = From, Label = add_labels(From),
+         Dimension = case_when(Dimension == "MR1" ~ "Demonstration", 
+                               Dimension == "MR2" ~ "Grandeur", 
+                               TRUE ~ "Antagonism")) |> 
+  format_table() |> 
+  select(Dimension, Item, Label, Coefficient, CI) |> 
+  display() 
+```
