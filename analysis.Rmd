@@ -167,19 +167,19 @@ wrap_plots(plot(efa3), plot(efa3_varimax), plot(efa3_equamax), plot(efa3_bentler
 # CFA
 
 ```{r, message=FALSE, warning=FALSE, cache=TRUE}
-cfa1 <-  parameters::efa_to_cfa(efa1, sort=TRUE, max_per_dimension=5) |> 
+cfa1 <-  parameters::efa_to_cfa(efa1, sort=TRUE, max_per_dimension=3) |> 
   lavaan::cfa(data=data)
 
-cfa3 <- parameters::efa_to_cfa(efa3, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+cfa3 <- parameters::efa_to_cfa(efa3, threshold = "max", sort=TRUE, max_per_dimension=3) |> 
   lavaan::cfa(data=data)
 
-cfa3b <- parameters::efa_to_cfa(efa3_varimax, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+cfa3b <- parameters::efa_to_cfa(efa3_varimax, threshold = "max", sort=TRUE, max_per_dimension=3) |> 
   lavaan::cfa(data=data)
 
-cfa3c <- parameters::efa_to_cfa(efa3_equamax, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+cfa3c <- parameters::efa_to_cfa(efa3_equamax, threshold = "max", sort=TRUE, max_per_dimension=3) |> 
   lavaan::cfa(data=data)
 
-cfa3d <- parameters::efa_to_cfa(efa3_bentlerQ, threshold = "max", sort=TRUE, max_per_dimension=5) |> 
+cfa3d <- parameters::efa_to_cfa(efa3_bentlerQ, threshold = "max", sort=TRUE, max_per_dimension=3) |> 
   lavaan::cfa(data=data)
 
 anova(cfa1, cfa3, cfa3b, cfa3c, cfa3d)
@@ -220,6 +220,41 @@ add_labels <- function(x) {
             # TODO
             TRUE ~ x)
 }
+
+
+parameters(cfa3b, standardize=TRUE, component="loading") |> 
+  arrange(To, desc(abs(Coefficient))) |>
+  mutate(Dimension = To, Item = From, Label = add_labels(From),
+         Dimension = case_when(Dimension == "MR1" ~ "Demonstration", 
+                               Dimension == "MR2" ~ "Grandeur", 
+                               TRUE ~ "Antagonism")) |> 
+  format_table() |> 
+  select(Dimension, Item, Label, Coefficient, CI) |> 
+  display() 
+```
+
+# Long Version
+
+```{r, message=FALSE, warning=FALSE, cache=TRUE}
+cfa1 <-  parameters::efa_to_cfa(efa1, sort=TRUE, max_per_dimension=6) |> 
+  lavaan::cfa(data=data)
+
+cfa3 <- parameters::efa_to_cfa(efa3, threshold = "max", sort=TRUE, max_per_dimension=6) |> 
+  lavaan::cfa(data=data)
+
+cfa3b <- parameters::efa_to_cfa(efa3_varimax, threshold = "max", sort=TRUE, max_per_dimension=6) |> 
+  lavaan::cfa(data=data)
+
+cfa3c <- parameters::efa_to_cfa(efa3_equamax, threshold = "max", sort=TRUE, max_per_dimension=6) |> 
+  lavaan::cfa(data=data)
+
+cfa3d <- parameters::efa_to_cfa(efa3_bentlerQ, threshold = "max", sort=TRUE, max_per_dimension=6) |> 
+  lavaan::cfa(data=data)
+
+anova(cfa1, cfa3, cfa3b, cfa3c, cfa3d)
+
+parameters::parameters(cfa3b) |> 
+  display() 
 
 
 parameters(cfa3b, standardize=TRUE, component="loading") |> 
