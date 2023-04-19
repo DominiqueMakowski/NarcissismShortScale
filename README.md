@@ -2,7 +2,7 @@
 
 A reanalysis of the open-access data from [**Weidmann et al. (preprint)**](https://psyarxiv.com/5ygtc/), that contains a large sample of participants completing 8 popular and validated narcissism questionnaires.
 
-We basically ran a massive factor analysis on all the individual 143 items (see ***analysis.html***). We found that the optimal number of latent factors was 3 (below are the most loading items on each dimension), corresponding to dimensions of **Demonstrative** (aka Contingent Self-Esteem, the demonstrative use for narcissism to mitigate low self-esteem issues), **Grandiose** (heightened sense of self-worth), and **Antagonistic** (disregard for others) narcissism. These latent dimensions were mostly orthogonal to each other (max r = .01).
+We basically ran a massive factor analysis on all the individual 143 items (see ***analysis.html***). We found that the optimal number of latent factors was 3 (below are the most loading items on each dimension), corresponding to dimensions of **Demonstrative** (aka Contingent Self-Esteem or Acclaim Seeking; the demonstrative use for narcissism to mitigate low self-esteem issues), **Grandiose** (aka Admiration; heightened sense of self-worth), and **Antagonistic** (aka Rivalry; disregard and devaluation of others) narcissism. These latent dimensions were mostly orthogonal to each other (max r = .01).
 
 ## Short Version (3 x 3 items)
 

@@ -192,8 +192,8 @@ parameters::parameters(cfa3b) |>
 # Items
 
 ```{r message=FALSE, warning=FALSE, cache=TRUE}
-# chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/http://www.antoniocasella.eu/archipsy/Wright_2010.pdf
-# chrome-extension://efaidnbmnnnibpcajpcglclefindmkaj/http://www.persoc.net/persoc/uploads/Toolbox/NARQ_English.pdf
+# http://www.antoniocasella.eu/archipsy/Wright_2010.pdf
+# http://www.persoc.net/persoc/uploads/Toolbox/NARQ_English.pdf
 add_labels <- function(x) {
   case_when(x == "pni8" ~ "When people don’t notice me, I start to feel bad about myself.",
             x == "pni16" ~ "When others don’t notice me, I start to feel worthless.",
